@@ -1,6 +1,6 @@
 output "frontend_bucket_name" {
   description = "Name of the bucket containing the static files"
-  value       = aws_s3_bucket.website.bucket
+  value       = aws_s3_bucket.origin_website.bucket
 }
 
 output "cloudfront_url" {

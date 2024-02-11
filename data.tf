@@ -35,7 +35,7 @@ data "aws_iam_policy_document" "origin_bucket_policy" {
       type        = "AWS"
     }
 
-    resources = ["${aws_s3_bucket.website.arn}/*"]
+    resources = ["${aws_s3_bucket.origin_website.arn}/*"]
   }
 
 }
