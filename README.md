@@ -209,7 +209,7 @@ In case you want to build the frontend:
 npm install -g @angular/cli
 cd frontend
 npm install
-ng build # Will generate the artifacts in dist/devops-challenge
+npm run build # Will generate the artifacts in dist/devops-challenge
 ```
 
 Otherwise, download the zip `front-devops-challenge-v1.0.0.zip` from the releases page and extract it in the `frontend`
