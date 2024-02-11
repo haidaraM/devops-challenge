@@ -69,12 +69,12 @@ resource "aws_s3_bucket_acl" "cloudfront_logs_acl" {
 }
 
 # As Terraform doesn't support S3 sync. So we are using a null ressource to deploy the static files to S3
-resource "null_resource" "deploy_to_s3" {
-  triggers = {
-    s3_bucket        = aws_s3_bucket.website.bucket
-    front_index_file = filebase64sha256("${path.module}/${var.front_build_dir}/index.html")
-    config_content   = local.front_config_final_content
-  }
+resource "terraform_data" "deploy_to_s3" {
+  triggers_replace = [
+    aws_s3_bucket.website.bucket,
+    filebase64sha256("${path.module}/${var.front_build_dir}/index.html"),
+    local.front_config_final_content
+  ]
 
   # Generate the template for the frontend
   provisioner "local-exec" {
