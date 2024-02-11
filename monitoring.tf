@@ -1,11 +1,11 @@
 resource "aws_sns_topic" "alerting" {
-  name         = "${var.prefix}-alerting"
+  name         = "${var.prefix}-${var.env}-alerting"
   display_name = "SNS for DevOps challenge alerting"
 }
 
 #
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
-  alarm_name          = "${lower(var.env)}-${var.prefix}-backend-api-errors"
+  alarm_name          = "${var.prefix}-${var.env}-backend-api-errors"
   alarm_description   = "Alarm triggered when there some errors on the lambda function"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 5
@@ -22,7 +22,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "dynamodb_throttled_requests" {
-  alarm_name          = "${lower(var.env)}-${var.prefix}-dynamodb-throttled-requests"
+  alarm_name          = "${var.prefix}-${var.env}-dynamodb-throttled-requests"
   alarm_description   = "Alarm triggered when requests to DynamoDB exceed the provisioned throughput limits"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 5

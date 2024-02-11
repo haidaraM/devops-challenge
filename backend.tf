@@ -1,5 +1,5 @@
 locals {
-  users_raw = jsondecode(file("${path.root}/users.json"))
+  users_raw = jsondecode(file("${path.root}/backend/users.json"))
   # change users list to a map of users suitable for Terraform for_each
   users_map = { for u in local.users_raw : u["id"] => {
     name    = u["name"]
@@ -7,42 +7,17 @@ locals {
   } }
 }
 
-# Package the lambda in a zip file
-data "archive_file" "lambda_package" {
-  output_path = "${var.lambda_directory}/lambda.zip"
-  source_file = "${var.lambda_directory}/main.py"
-  type        = "zip"
-}
-
 resource "aws_iam_role" "lambda_role" {
-  name               = "${var.prefix}-api-backend"
+  name               = "${var.prefix}-${var.env}-api-backend"
   description        = "IAM Role for the API Backend"
   assume_role_policy = data.aws_iam_policy_document.lambda_role_policy.json
 }
 
-data "aws_iam_policy_document" "lambda_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
-    }
-  }
-}
 
 resource "aws_iam_role_policy" "lambda_dynamodb_access" {
   name   = "dynamodb-access"
   policy = data.aws_iam_policy_document.lambda_dynamodb_access.json
   role   = aws_iam_role.lambda_role.id
-}
-
-data "aws_iam_policy_document" "lambda_dynamodb_access" {
-  statement {
-    sid       = "AllowAccessToDynamoDB"
-    actions   = ["dynamodb:Scan"]
-    resources = [aws_dynamodb_table.users.arn]
-  }
 }
 
 
@@ -58,7 +33,7 @@ resource "aws_iam_role_policy_attachment" "lambda_xray_access" {
 
 
 resource "aws_lambda_function" "api_backend" {
-  function_name    = "${var.prefix}-api-backend"
+  function_name    = "${var.prefix}-${var.env}-api-backend"
   description      = "API Backend for the DevOps challenge project"
   role             = aws_iam_role.lambda_role.arn
   handler          = "main.handler"
@@ -84,12 +59,11 @@ resource "aws_cloudwatch_log_group" "log_group" {
 }
 
 resource "aws_dynamodb_table" "users" {
-  name           = "${var.prefix}-users"
+  name           = "${var.prefix}-${var.env}-users"
   billing_mode   = "PROVISIONED"
   hash_key       = "id"
   read_capacity  = 3
   write_capacity = 3
-
 
   attribute {
     name = "id"
@@ -114,7 +88,7 @@ ITEM
 }
 
 resource "aws_apigatewayv2_api" "http_api" {
-  name          = "${var.prefix}-http-api"
+  name          = "${var.prefix}-${var.env}-http-api"
   description   = "A simple HTTP API for the devops challenge"
   protocol_type = "HTTP"
 
