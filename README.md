@@ -51,7 +51,7 @@ with the AWS following services:
   [Lambda function concurrent executions](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html) that
   we need to be aware of and monitor when serving the website to a larger audience.
 - Xray for tracing on the Lambda function. Lambda logs are pushed to a Cloudwatch log group.
-- A Dynamodb table will store the data. The data consists of some fake data about users (see [users.json](users.json)).
+- A Dynamodb table will store the data. The data consists of some fake data about users (see [users.json](backend/users.json)).
   Terraform reads that file and put the items in Dynamodb.  
   A provisioned billing mode is used for this project. Depending on your usage, you may
   consider [On Demand mode](https://aws.amazon.com/blogs/aws/amazon-dynamodb-on-demand-no-capacity-planning-and-pay-per-request-pricing/)
@@ -77,19 +77,29 @@ when:
   environment name. The template build of this file is located
   at [frontend/src/assets/config.tpl.json.](frontend/src/assets/config.tpl.json)
 
-#### Requirements
+<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+### Requirements
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | > = 1 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.7 |
 | <a name="requirement_archive"></a> [archive](#requirement\_archive) | ~> 2 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 3.50 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3 |
 
-#### Resources and data sources
+### Providers
 
-The following resources and data sources are used by Terraform:
+| Name | Version |
+|------|---------|
+| <a name="provider_archive"></a> [archive](#provider\_archive) | ~> 2 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5 |
+| <a name="provider_null"></a> [null](#provider\_null) | ~> 3 |
+
+### Modules
+
+No modules.
+
+### Resources
 
 | Name | Type |
 |------|------|
@@ -112,49 +122,55 @@ The following resources and data sources are used by Terraform:
 | [aws_lambda_permission.allow_apigateway_to_invoke_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
 | [aws_s3_bucket.cloudfront_access_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket.website](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_object.architecture](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_object) | resource |
+| [aws_s3_bucket_acl.cloudfront_logs_acl](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_acl) | resource |
+| [aws_s3_bucket_ownership_controls.cf_access_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_ownership_controls) | resource |
 | [aws_s3_bucket_policy.origin_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
+| [aws_s3_object.architecture_img](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
 | [aws_sns_topic.alerting](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
 | [null_resource.deploy_to_s3](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
-| [random_string.bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [archive_file.lambda_package](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_canonical_user_id.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/canonical_user_id) | data source |
 | [aws_cloudfront_cache_policy.cache_optimized](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/cloudfront_cache_policy) | data source |
+| [aws_cloudfront_log_delivery_canonical_user_id.awslogsdelivery](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/cloudfront_log_delivery_canonical_user_id) | data source |
 | [aws_iam_policy_document.lambda_dynamodb_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.lambda_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.origin_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
-#### Inputs
+### Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Region to deploy | `string` | `"eu-west-2"` | no |
-| <a name="input_cloudfront_price_class"></a> [cloudfront\_price\_class](#input\_cloudfront\_price\_class) | The price class for this distribution. One of PriceClass\_All, PriceClass\_200, PriceClass\_100 | `string` | `"PriceClass_100"` | no |
-| <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | Default tags to apply to resources | `map(string)` | <pre>{<br>  "App": "devops-challenge"<br>}</pre> | no |
-| <a name="input_env"></a> [env](#input\_env) | Name of the environment | `string` | `"Demo"` | no |
+| <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Region to deploy to | `string` | `"eu-west-2"` | no |
+| <a name="input_cloudfront_price_class"></a> [cloudfront\_price\_class](#input\_cloudfront\_price\_class) | The price class for this distribution. One of PriceClass\_All, PriceClass\_200, PriceClass\_100. See https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html | `string` | `"PriceClass_100"` | no |
+| <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | Default tags to apply to resources | `map(string)` | <pre>{<br>  "app": "devops-challenge"<br>}</pre> | no |
+| <a name="input_env"></a> [env](#input\_env) | Name of the environment | `string` | `"dev"` | no |
 | <a name="input_front_build_dir"></a> [front\_build\_dir](#input\_front\_build\_dir) | The folder where the frontend has been built | `string` | `"frontend/dist/devops-challenge/"` | no |
 | <a name="input_lambda_directory"></a> [lambda\_directory](#input\_lambda\_directory) | The directory containing lambda | `string` | `"backend"` | no |
 | <a name="input_prefix"></a> [prefix](#input\_prefix) | A prefix appended to each resource | `string` | `"devops-challenge"` | no |
 
-#### Outputs
+### Outputs
 
 | Name | Description |
 |------|-------------|
 | <a name="output_cloudfront_url"></a> [cloudfront\_url](#output\_cloudfront\_url) | Cloudfront URL to access the website |
 | <a name="output_frontend_bucket_name"></a> [frontend\_bucket\_name](#output\_frontend\_bucket\_name) | Name of the bucket containing the static files |
 | <a name="output_users_endpoint"></a> [users\_endpoint](#output\_users\_endpoint) | API Gateway url to access users |
+<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+
 
 ### Repository: monorepo structure
 
 This mono repository has the following structure:
 
 ```shell
-├── backend/ # Lambda backend
+.
+├── backend # The backend in Lambda
 │   ├── README.md
-│   ├── lambda.zip
-│   └── main.py
-├── frontend/ # Angular frontend application
-│   ├── src/ 
+│   ├── main.py
+│   └── users.json # Some fake users list
+├── frontend # Angular frontend application
+│   ├── src
 │   ├── README.md
 │   ├── angular.json
 │   ├── karma.conf.js
@@ -163,17 +179,17 @@ This mono repository has the following structure:
 │   ├── tsconfig.app.json
 │   ├── tsconfig.json
 │   └── tsconfig.spec.json
-├── img/
+├── img
 │   ├── architecture.drawio
-│   ├── screenshot.png
-│   └── architecture.png
+│   ├── architecture.png
+│   └── screenshot.png
 ├── README.md
 ├── backend.tf # Backend resources: lambda function, API Gateway...
+├── data.tf # Data sources
 ├── frontend.tf # Frontend resources: S3 buckets, cloudfront
-├── main.tf # Providers
+├── main.tf # Terraform Providers 
 ├── monitoring.tf # SNS, alarms
 ├── outputs.tf # Terraform outputs
-├── users.json # Some fake users data
 └── variables.tf # Variables for terraform
 ```
 

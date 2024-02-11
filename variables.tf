@@ -14,7 +14,7 @@ variable "default_tags" {
   description = "Default tags to apply to resources"
   type        = map(string)
   default = {
-    App = "devops-challenge"
+    app = "devops-challenge"
   }
 }
 
@@ -33,7 +33,7 @@ variable "lambda_directory" {
 variable "env" {
   description = "Name of the environment"
   type        = string
-  default     = "Demo"
+  default     = "dev"
 }
 
 variable "cloudfront_price_class" {

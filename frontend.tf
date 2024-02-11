@@ -1,56 +1,70 @@
 locals {
   front_config_file = "${path.module}/${var.front_build_dir}/assets/config.tpl.json"
+
   front_config_final_content = templatefile(local.front_config_file, {
     api_url = aws_apigatewayv2_api.http_api.api_endpoint
     env     = var.env
     }
   )
-  cf_origin_id = "s3-website-origin"
+  cf_origin_id = "s3-website-origin-${var.env}"
 }
 
-# Required for cloudfront access logs bucket
-data "aws_canonical_user_id" "current" {}
-
-# Just a random suffix for the bucket to avoid naming conflits
-resource "random_string" "bucket_suffix" {
-  length    = 5
-  special   = false
-  lower     = true
-  min_lower = 5
-}
 
 # The bucket hosting the static files
 resource "aws_s3_bucket" "website" {
-  bucket        = "${var.prefix}-${random_string.bucket_suffix.result}"
+  bucket        = "${var.prefix}-${var.env}-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
-  acl           = "private"
 }
 
 # We deploy to the architecture image to S3
-resource "aws_s3_bucket_object" "architecture" {
+resource "aws_s3_object" "architecture_img" {
   bucket = aws_s3_bucket.website.bucket
   key    = "assets/architecture.png"
   source = "${path.root}/img/architecture.png"
   etag   = filemd5("${path.root}/img/architecture.png") # Triggers updates when the value changes
 }
 
+
 # The bucket for cloudfront access logs
 resource "aws_s3_bucket" "cloudfront_access_logs" {
-  bucket        = "${var.prefix}-cloudfront-logs-${random_string.bucket_suffix.result}"
+  bucket        = "${var.prefix}-${var.env}-cloudfront-logs-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
+}
 
-  grant {
-    id          = data.aws_canonical_user_id.current.id
-    permissions = ["FULL_CONTROL"]
-    type        = "CanonicalUser"
+resource "aws_s3_bucket_ownership_controls" "cf_access_logs" {
+  bucket = aws_s3_bucket.cloudfront_access_logs.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
   }
+}
 
-  grant {
-    # Grant CloudFront logs access to your Amazon S3 Bucket
-    # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#AccessLogsBucketAndFileOwnership
-    id          = "c4c1ede66af53448b93c283ce9448c4ba468c9432aa01d700d3878632f77d2d0"
-    permissions = ["FULL_CONTROL"]
-    type        = "CanonicalUser"
+resource "aws_s3_bucket_acl" "cloudfront_logs_acl" {
+  depends_on = [aws_s3_bucket_ownership_controls.cf_access_logs]
+  bucket     = aws_s3_bucket.cloudfront_access_logs.bucket
+
+  access_control_policy {
+    owner {
+      id = data.aws_canonical_user_id.current.id
+    }
+
+    grant {
+      permission = "FULL_CONTROL"
+      grantee {
+        id   = data.aws_canonical_user_id.current.id
+        type = "CanonicalUser"
+      }
+    }
+
+    grant {
+      permission = "FULL_CONTROL"
+      grantee {
+        # Grant CloudFront logs access to your Amazon S3 Bucket
+        # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#AccessLogsBucketAndFileOwnership
+        id   = data.aws_cloudfront_log_delivery_canonical_user_id.awslogsdelivery.id
+        type = "CanonicalUser"
+      }
+    }
   }
 }
 
@@ -72,25 +86,10 @@ resource "null_resource" "deploy_to_s3" {
     We suppose here that the required AWS credentials are exported in the environment variables.
     Otherwise, this command will not work
     */
-    command = "aws s3 sync --exclude '${aws_s3_bucket_object.architecture.key}' --exclude 'assets/config.tpl.json' --delete ${var.front_build_dir} s3://${aws_s3_bucket.website.bucket}"
+    command = "aws s3 sync --exclude '${aws_s3_object.architecture_img.key}' --exclude 'assets/config.tpl.json' --delete ${var.front_build_dir} s3://${aws_s3_bucket.website.bucket}"
   }
 }
 
-data "aws_iam_policy_document" "origin_bucket_policy" {
-  statement {
-    sid     = "AllowCloudFrontAccessToBucket"
-    effect  = "Allow"
-    actions = ["s3:GetObject"]
-
-    principals {
-      identifiers = [aws_cloudfront_origin_access_identity.origin_access_identity.iam_arn]
-      type        = "AWS"
-    }
-
-    resources = ["${aws_s3_bucket.website.arn}/*"]
-  }
-
-}
 
 resource "aws_s3_bucket_policy" "origin_bucket_policy" {
   bucket = aws_s3_bucket.website.bucket
@@ -101,9 +100,6 @@ resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
   comment = "Origin access identity for the website bucket ${aws_s3_bucket.website.bucket}"
 }
 
-data "aws_cloudfront_cache_policy" "cache_optimized" {
-  name = "Managed-CachingOptimized"
-}
 
 resource "aws_cloudfront_distribution" "website" {
   enabled             = true
