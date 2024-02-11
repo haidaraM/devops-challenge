@@ -83,12 +83,13 @@ resource "terraform_data" "deploy_to_s3" {
 
   /*
     We suppose here that the required AWS credentials are exported in the environment variables.
-    Otherwise, the following commands will not work.
+    Otherwise, the following AWS commands will not work.
   */
   provisioner "local-exec" {
     command = "aws s3 sync --exclude '${aws_s3_object.architecture_img.key}' --exclude 'assets/config.tpl.json' --delete ${var.front_build_dir} s3://${aws_s3_bucket.origin_website.bucket}"
   }
 
+  # Do not cache the index.html so that changes are deployed automatically. Other files are cached by default.
   provisioner "local-exec" {
     command = "aws s3 cp --copy-props metadata-directive --cache-control 'max-age=0,no-store' s3://${aws_s3_bucket.origin_website.bucket}/index.html s3://${aws_s3_bucket.origin_website.bucket}/index.html"
   }
