@@ -93,7 +93,7 @@ when:
 |------|---------|
 | <a name="provider_archive"></a> [archive](#provider\_archive) | ~> 2 |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5 |
-| <a name="provider_null"></a> [null](#provider\_null) | ~> 3 |
+| <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ### Modules
 
@@ -127,7 +127,7 @@ No modules.
 | [aws_s3_bucket_policy.origin_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
 | [aws_s3_object.architecture_img](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
 | [aws_sns_topic.alerting](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
-| [null_resource.deploy_to_s3](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [terraform_data.deploy_to_s3](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 | [archive_file.lambda_package](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_canonical_user_id.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/canonical_user_id) | data source |
