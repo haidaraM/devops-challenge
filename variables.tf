@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "Region to deploy to"
   type        = string
-  default     = "eu-west-2"
+  default     = "eu-west-3"
 }
 
 variable "prefix" {

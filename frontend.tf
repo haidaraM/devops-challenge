@@ -11,14 +11,14 @@ locals {
 
 
 # The bucket hosting the static files
-resource "aws_s3_bucket" "website" {
+resource "aws_s3_bucket" "origin_website" {
   bucket        = "${var.prefix}-${var.env}-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 }
 
 # We deploy to the architecture image to S3
 resource "aws_s3_object" "architecture_img" {
-  bucket = aws_s3_bucket.website.bucket
+  bucket = aws_s3_bucket.origin_website.bucket
   key    = "assets/architecture.png"
   source = "${path.root}/img/architecture.png"
   etag   = filemd5("${path.root}/img/architecture.png") # Triggers updates when the value changes
@@ -26,22 +26,22 @@ resource "aws_s3_object" "architecture_img" {
 
 
 # The bucket for cloudfront access logs
-resource "aws_s3_bucket" "cloudfront_access_logs" {
+resource "aws_s3_bucket" "cf_access_logs" {
   bucket        = "${var.prefix}-${var.env}-cloudfront-logs-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 }
 
 resource "aws_s3_bucket_ownership_controls" "cf_access_logs" {
-  bucket = aws_s3_bucket.cloudfront_access_logs.id
+  bucket = aws_s3_bucket.cf_access_logs.id
 
   rule {
     object_ownership = "BucketOwnerPreferred"
   }
 }
 
-resource "aws_s3_bucket_acl" "cloudfront_logs_acl" {
+resource "aws_s3_bucket_acl" "cf_logs_acl" {
   depends_on = [aws_s3_bucket_ownership_controls.cf_access_logs]
-  bucket     = aws_s3_bucket.cloudfront_access_logs.bucket
+  bucket     = aws_s3_bucket.cf_access_logs.bucket
 
   access_control_policy {
     owner {
@@ -71,7 +71,7 @@ resource "aws_s3_bucket_acl" "cloudfront_logs_acl" {
 # As Terraform doesn't support S3 sync. So we are using a null ressource to deploy the static files to S3
 resource "terraform_data" "deploy_to_s3" {
   triggers_replace = [
-    aws_s3_bucket.website.bucket,
+    aws_s3_bucket.origin_website.bucket,
     filebase64sha256("${path.module}/${var.front_build_dir}/index.html"),
     local.front_config_final_content
   ]
@@ -81,25 +81,28 @@ resource "terraform_data" "deploy_to_s3" {
     command = "echo '${local.front_config_final_content}' > ${path.module}/${var.front_build_dir}/assets/config.json"
   }
 
-  provisioner "local-exec" {
-    /*
+  /*
     We suppose here that the required AWS credentials are exported in the environment variables.
-    Otherwise, this command will not work
-    */
-    command = "aws s3 sync --exclude '${aws_s3_object.architecture_img.key}' --exclude 'assets/config.tpl.json' --delete ${var.front_build_dir} s3://${aws_s3_bucket.website.bucket}"
+    Otherwise, the following AWS commands will not work.
+  */
+  provisioner "local-exec" {
+    command = "aws s3 sync --exclude '${aws_s3_object.architecture_img.key}' --exclude 'assets/config.tpl.json' --delete ${var.front_build_dir} s3://${aws_s3_bucket.origin_website.bucket}"
+  }
+
+  # Do not cache the index.html so that changes are deployed automatically. Other files are cached by default.
+  provisioner "local-exec" {
+    command = "aws s3 cp --copy-props metadata-directive --cache-control 'max-age=0,no-store' s3://${aws_s3_bucket.origin_website.bucket}/index.html s3://${aws_s3_bucket.origin_website.bucket}/index.html"
   }
 }
 
-
-resource "aws_s3_bucket_policy" "origin_bucket_policy" {
-  bucket = aws_s3_bucket.website.bucket
+resource "aws_s3_bucket_policy" "cf_origin_bucket_policy" {
+  bucket = aws_s3_bucket.origin_website.bucket
   policy = data.aws_iam_policy_document.origin_bucket_policy.json
 }
 
 resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
-  comment = "Origin access identity for the website bucket ${aws_s3_bucket.website.bucket}"
+  comment = "Origin access identity for the website bucket ${aws_s3_bucket.origin_website.bucket}"
 }
-
 
 resource "aws_cloudfront_distribution" "website" {
   enabled             = true
@@ -125,7 +128,7 @@ resource "aws_cloudfront_distribution" "website" {
   }
 
   origin {
-    domain_name = aws_s3_bucket.website.bucket_regional_domain_name
+    domain_name = aws_s3_bucket.origin_website.bucket_regional_domain_name
     origin_id   = local.cf_origin_id
 
     s3_origin_config {
@@ -144,7 +147,7 @@ resource "aws_cloudfront_distribution" "website" {
   }
 
   logging_config {
-    bucket          = aws_s3_bucket.cloudfront_access_logs.bucket_domain_name
+    bucket          = aws_s3_bucket.cf_access_logs.bucket_domain_name
     include_cookies = false
   }
 }
