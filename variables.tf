@@ -18,12 +18,6 @@ variable "default_tags" {
   }
 }
 
-variable "front_build_dir" {
-  description = "The folder where the frontend has been built"
-  type        = string
-  default     = "frontend/dist/devops-challenge/"
-}
-
 variable "lambda_directory" {
   description = "The directory containing lambda"
   type        = string
@@ -36,8 +30,15 @@ variable "env" {
   default     = "dev"
 }
 
-variable "cloudfront_price_class" {
-  type        = string
-  description = "The price class for this distribution. One of PriceClass_All, PriceClass_200, PriceClass_100. See https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html"
-  default     = "PriceClass_100" # North America, Europe and Israel.
+variable "ovh_domain_conf" {
+  description = "OVH DNS zone configuration if you want to use a custom domain."
+  type = object({
+    dns_zone_name = string
+    subdomain     = optional(string, "")
+
+  })
+  default = {
+    dns_zone_name = ""
+    subdomain     = ""
+  }
 }

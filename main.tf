@@ -6,6 +6,12 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5"
     }
+
+    ovh = {
+      source  = "ovh/ovh"
+      version = "~> 0.37"
+    }
+
     archive = {
       source  = "hashicorp/archive"
       version = "~> 2"
@@ -21,4 +27,11 @@ provider "aws" {
   }
 }
 
+provider "aws" { # Cloudfront cert needs to be in us-east-1
+  alias  = "cloudfront-us-east-1"
+  region = "us-east-1"
+}
 
+provider "ovh" {
+  endpoint = "ovh-eu"
+}

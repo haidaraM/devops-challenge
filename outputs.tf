@@ -12,3 +12,8 @@ output "users_endpoint" {
   description = "API Gateway url to access users"
   value       = "${aws_apigatewayv2_api.http_api.api_endpoint}/users"
 }
+
+output "custom_domain" {
+  description = "The custom domain name when OVH is used"
+  value       = var.ovh_domain_conf.dns_zone_name == "" ? null : "https://${local.cf_fqdn}"
+}
