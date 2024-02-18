@@ -109,6 +109,7 @@ resource "aws_cloudfront_distribution" "website" {
   comment             = "cloudfront distribution for devops challenge"
   price_class         = var.cloudfront_price_class
   default_root_object = "index.html"
+  aliases             = [local.frontend_fqdn]
 
   # As it's an SPA, we let the SPA handle access to files not found in the bucket
   custom_error_response {
@@ -142,8 +143,10 @@ resource "aws_cloudfront_distribution" "website" {
   }
 
   viewer_certificate {
-    # Because we don't use a custom domain with certificate
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = false
+    acm_certificate_arn            = aws_acm_certificate.cf_certificate.arn
+    minimum_protocol_version       = "TLSv1.2_2021"
+    ssl_support_method             = "sni-only"
   }
 
   logging_config {
