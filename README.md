@@ -207,6 +207,7 @@ This mono repository has the following structure:
 ├── main.tf # Terraform Providers 
 ├── monitoring.tf # SNS, alarms
 ├── outputs.tf # Terraform outputs
+├── ovh-acm.tf # OVH and ACM configuration
 └── variables.tf # Variables for terraform
 ```
 
