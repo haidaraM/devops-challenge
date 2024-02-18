@@ -1,15 +1,3 @@
-locals {
-  front_config_file = "${path.module}/${var.front_build_dir}/assets/config.tpl.json"
-
-  front_config_final_content = templatefile(local.front_config_file, {
-    api_url = aws_apigatewayv2_api.http_api.api_endpoint
-    env     = var.env
-    }
-  )
-  cf_origin_id = "s3-website-origin-${var.env}"
-}
-
-
 # The bucket hosting the static files
 resource "aws_s3_bucket" "origin_website" {
   bucket        = "${var.prefix}-${var.env}-${data.aws_caller_identity.current.account_id}"
@@ -72,13 +60,13 @@ resource "aws_s3_bucket_acl" "cf_logs_acl" {
 resource "terraform_data" "deploy_to_s3" {
   triggers_replace = [
     aws_s3_bucket.origin_website.bucket,
-    filebase64sha256("${path.module}/${var.front_build_dir}/index.html"),
-    local.front_config_final_content
+    filebase64sha256("${path.module}/${local.frontend_build_dir}/index.html"),
+    local.frontend_config_final_content
   ]
 
   # Generate the template for the frontend
   provisioner "local-exec" {
-    command = "echo '${local.front_config_final_content}' > ${path.module}/${var.front_build_dir}/assets/config.json"
+    command = "echo '${local.frontend_config_final_content}' > ${path.module}/${local.frontend_build_dir}/assets/config.json"
   }
 
   /*
@@ -86,7 +74,7 @@ resource "terraform_data" "deploy_to_s3" {
     Otherwise, the following AWS commands will not work.
   */
   provisioner "local-exec" {
-    command = "aws s3 sync --exclude '${aws_s3_object.architecture_img.key}' --exclude 'assets/config.tpl.json' --delete ${var.front_build_dir} s3://${aws_s3_bucket.origin_website.bucket}"
+    command = "aws s3 sync --exclude '${aws_s3_object.architecture_img.key}' --exclude 'assets/config.tpl.json' --delete ${local.frontend_build_dir} s3://${aws_s3_bucket.origin_website.bucket}"
   }
 
   # Do not cache the index.html so that changes are deployed automatically. Other files are cached by default.
@@ -107,9 +95,9 @@ resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
 resource "aws_cloudfront_distribution" "website" {
   enabled             = true
   comment             = "cloudfront distribution for devops challenge"
-  price_class         = var.cloudfront_price_class
+  price_class         = "PriceClass_100" # North America, Europe and Israel.
   default_root_object = "index.html"
-  aliases             = [local.frontend_fqdn]
+  aliases             = local.cf_aliases
 
   # As it's an SPA, we let the SPA handle access to files not found in the bucket
   custom_error_response {
@@ -143,10 +131,10 @@ resource "aws_cloudfront_distribution" "website" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = false
-    acm_certificate_arn            = aws_acm_certificate.cf_certificate.arn
-    minimum_protocol_version       = "TLSv1.2_2021"
-    ssl_support_method             = "sni-only"
+    cloudfront_default_certificate = var.ovh_domain_conf.dns_zone_name == ""
+    acm_certificate_arn            = var.ovh_domain_conf.dns_zone_name == "" ? null : aws_acm_certificate.cf_certificate[0].arn
+    minimum_protocol_version       = var.ovh_domain_conf.dns_zone_name == "" ? "TLSv1" : "TLSv1.2_2021"
+    ssl_support_method             = var.ovh_domain_conf.dns_zone_name == "" ? null : "sni-only"
   }
 
   logging_config {

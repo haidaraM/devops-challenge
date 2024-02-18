@@ -1,12 +1,3 @@
-locals {
-  users_raw = jsondecode(file("${path.root}/backend/users.json"))
-  # change users list to a map of users suitable for Terraform for_each
-  users_map = { for u in local.users_raw : u["id"] => {
-    name    = u["name"]
-    address = u["address"]
-  } }
-}
-
 resource "aws_iam_role" "lambda_role" {
   name               = "${var.prefix}-${var.env}-api-backend"
   description        = "IAM Role for the API Backend"
@@ -72,7 +63,7 @@ resource "aws_dynamodb_table" "users" {
 }
 
 resource "aws_dynamodb_table_item" "users" {
-  for_each   = local.users_map
+  for_each   = local.backend_users_map
   table_name = aws_dynamodb_table.users.name
   hash_key   = aws_dynamodb_table.users.hash_key
   range_key  = aws_dynamodb_table.users.range_key

@@ -51,13 +51,28 @@ with the AWS following services:
   [Lambda function concurrent executions](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html) that
   we need to be aware of and monitor when serving the website to a larger audience.
 - Xray for tracing on the Lambda function. Lambda logs are pushed to a Cloudwatch log group.
-- A Dynamodb table will store the data. The data consists of some fake data about users (see [users.json](backend/users.json)).
-  Terraform reads that file and put the items in Dynamodb.  
+- A Dynamodb table will store the data. The data consists of some fake data about users (
+  see [users.json](backend/users.json)).
+  Terraform reads that file and put the items in Dynamodb.
   A provisioned billing mode is used for this project. Depending on your usage, you may
   consider [On Demand mode](https://aws.amazon.com/blogs/aws/amazon-dynamodb-on-demand-no-capacity-planning-and-pay-per-request-pricing/)
   or increase the provisioned capacities.
 
 ![Architecture image](img/architecture.png)
+
+### Custom domain with OVH (bonus)
+
+If you have an existing DNS Zone on [OVH](https://www.ovhcloud.com/fr/), you can leverage it to have a custom domain on
+top your CloudFront distribution. To use it, set the variable `ovh_domain_conf`.
+
+Example:
+
+```shell
+# Will use the domain haidara.io on OVH to create a DNS record with the following format: ${var.prefix}-${var.env}.haidara.io
+export TF_VAR_ovh_domain_conf='{"dns_zone_name": "haidara.io"}'
+# Or this one will create demo.haidara.io`
+export TF_VAR_ovh_domain_conf='{"dns_zone_name": "haidara.io", "subdomain": "demo"}'
+```
 
 ### Screenshot
 
@@ -85,6 +100,7 @@ when:
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.7 |
 | <a name="requirement_archive"></a> [archive](#requirement\_archive) | ~> 2 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5 |
+| <a name="requirement_ovh"></a> [ovh](#requirement\_ovh) | ~> 0.37 |
 
 ### Providers
 
@@ -92,6 +108,8 @@ when:
 |------|---------|
 | <a name="provider_archive"></a> [archive](#provider\_archive) | ~> 2 |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5 |
+| <a name="provider_aws.cloudfront-us-east-1"></a> [aws.cloudfront-us-east-1](#provider\_aws.cloudfront-us-east-1) | ~> 5 |
+| <a name="provider_ovh"></a> [ovh](#provider\_ovh) | ~> 0.37 |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ### Modules
@@ -102,6 +120,8 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [aws_acm_certificate.cf_certificate](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate) | resource |
+| [aws_acm_certificate_validation.validation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation) | resource |
 | [aws_apigatewayv2_api.http_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_api) | resource |
 | [aws_apigatewayv2_integration.lambda_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_integration) | resource |
 | [aws_apigatewayv2_route.users](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_route) | resource |
@@ -126,6 +146,8 @@ No modules.
 | [aws_s3_bucket_policy.cf_origin_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
 | [aws_s3_object.architecture_img](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
 | [aws_sns_topic.alerting](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
+| [ovh_domain_zone_record.cert_validation_record](https://registry.terraform.io/providers/ovh/ovh/latest/docs/resources/domain_zone_record) | resource |
+| [ovh_domain_zone_record.cf_record](https://registry.terraform.io/providers/ovh/ovh/latest/docs/resources/domain_zone_record) | resource |
 | [terraform_data.deploy_to_s3](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 | [archive_file.lambda_package](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
@@ -141,11 +163,10 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Region to deploy to | `string` | `"eu-west-3"` | no |
-| <a name="input_cloudfront_price_class"></a> [cloudfront\_price\_class](#input\_cloudfront\_price\_class) | The price class for this distribution. One of PriceClass\_All, PriceClass\_200, PriceClass\_100. See https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html | `string` | `"PriceClass_100"` | no |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | Default tags to apply to resources | `map(string)` | <pre>{<br>  "app": "devops-challenge"<br>}</pre> | no |
 | <a name="input_env"></a> [env](#input\_env) | Name of the environment | `string` | `"dev"` | no |
-| <a name="input_front_build_dir"></a> [front\_build\_dir](#input\_front\_build\_dir) | The folder where the frontend has been built | `string` | `"frontend/dist/devops-challenge/"` | no |
 | <a name="input_lambda_directory"></a> [lambda\_directory](#input\_lambda\_directory) | The directory containing lambda | `string` | `"backend"` | no |
+| <a name="input_ovh_domain_conf"></a> [ovh\_domain\_conf](#input\_ovh\_domain\_conf) | OVH DNS zone configuration if you want to use a custom domain. | <pre>object({<br>    dns_zone_name = string<br>    subdomain     = optional(string, "")<br><br>  })</pre> | <pre>{<br>  "dns_zone_name": "",<br>  "subdomain": ""<br>}</pre> | no |
 | <a name="input_prefix"></a> [prefix](#input\_prefix) | A prefix appended to each resource | `string` | `"devops-challenge"` | no |
 
 ### Outputs
@@ -153,10 +174,10 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_cloudfront_url"></a> [cloudfront\_url](#output\_cloudfront\_url) | Cloudfront URL to access the website |
+| <a name="output_custom_domain"></a> [custom\_domain](#output\_custom\_domain) | The custom domain name when OVH is used |
 | <a name="output_frontend_bucket_name"></a> [frontend\_bucket\_name](#output\_frontend\_bucket\_name) | Name of the bucket containing the static files |
 | <a name="output_users_endpoint"></a> [users\_endpoint](#output\_users\_endpoint) | API Gateway url to access users |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
-
 
 ### Repository: monorepo structure
 

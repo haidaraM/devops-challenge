@@ -27,7 +27,7 @@ provider "aws" {
   }
 }
 
-provider "aws" {
+provider "aws" { # Cloudfront cert needs to be in us-east-1
   alias  = "cloudfront-us-east-1"
   region = "us-east-1"
 }
