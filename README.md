@@ -39,8 +39,6 @@ with the AWS following services:
   The distribution price class is set `PriceClass_100` (North America, Europe and Israel). It defines on which edge
   location Cloudfront will serve the requests. In order to target another
   audience, [change the price class.](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html)
-
-  Cloudfront also allows us to set up a custom domain for our website (NOT implemented in this project).
 - An S3 bucket for Cloudfront standard access logs. It can be connected
   to [AWS Athena](https://aws.amazon.com/blogs/big-data/easily-query-aws-service-logs-using-amazon-athena/) for further
   analysis.
@@ -58,9 +56,15 @@ with the AWS following services:
   consider [On Demand mode](https://aws.amazon.com/blogs/aws/amazon-dynamodb-on-demand-no-capacity-planning-and-pay-per-request-pricing/)
   or increase the provisioned capacities.
 
+This project also demonstrates the following features of Terraform:
+
+- Cross-region deployment with the Cloudfront ACM certificate in us-east-1 (mandatory)
+- Multi cloud by using OVH DNS zone instead of AWS Route53
+- Terraform local provisioners to deploy the frontend to an S3 bucket only when there are changes
+
 ![Architecture image](img/architecture.png)
 
-### Custom domain with OVH (bonus)
+### Custom domain with OVH
 
 If you have an existing DNS Zone on [OVH](https://www.ovhcloud.com/fr/), you can leverage it to have a custom domain on
 top your CloudFront distribution. To use it, set the variable `ovh_domain_conf`.
