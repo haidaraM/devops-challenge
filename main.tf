@@ -12,8 +12,13 @@ terraform {
       version = "~> 0.37"
     }
 
-    archive = {
-      source  = "hashicorp/archive"
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3"
+    }
+
+    external = {
+      source  = "hashicorp/external"
       version = "~> 2"
     }
   }
@@ -22,12 +27,14 @@ terraform {
 provider "aws" {
   region = var.aws_region
 
-  default_tags { # Automatically apply these tags to all the resources
+  default_tags {
+    # Automatically apply these tags to all the resources
     tags = merge({ "env" : var.env }, var.default_tags)
   }
 }
 
-provider "aws" { # Cloudfront cert needs to be in us-east-1
+provider "aws" {
+  # Cloudfront cert needs to be in us-east-1
   alias  = "cloudfront-us-east-1"
   region = "us-east-1"
 }

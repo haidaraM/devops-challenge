@@ -3,7 +3,6 @@ resource "aws_sns_topic" "alerting" {
   display_name = "SNS for DevOps challenge alerting"
 }
 
-#
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   alarm_name          = "${var.prefix}-${var.env}-backend-api-errors"
   alarm_description   = "Alarm triggered when there some errors on the lambda function"
@@ -17,7 +16,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   metric_name         = "Errors"
   alarm_actions       = [aws_sns_topic.alerting.arn]
   dimensions = {
-    FunctionName = aws_lambda_function.api_backend.function_name
+    FunctionName = module.lambda_function.lambda_function_name
   }
 }
 

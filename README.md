@@ -102,15 +102,15 @@ when:
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.7 |
-| <a name="requirement_archive"></a> [archive](#requirement\_archive) | ~> 2 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5 |
+| <a name="requirement_external"></a> [external](#requirement\_external) | ~> 2 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3 |
 | <a name="requirement_ovh"></a> [ovh](#requirement\_ovh) | ~> 0.37 |
 
 ### Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_archive"></a> [archive](#provider\_archive) | ~> 2 |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5 |
 | <a name="provider_aws.cloudfront-us-east-1"></a> [aws.cloudfront-us-east-1](#provider\_aws.cloudfront-us-east-1) | ~> 5 |
 | <a name="provider_ovh"></a> [ovh](#provider\_ovh) | ~> 0.37 |
@@ -118,7 +118,9 @@ when:
 
 ### Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_lambda_function"></a> [lambda\_function](#module\_lambda\_function) | terraform-aws-modules/lambda/aws | 7.2.1 |
 
 ### Resources
 
@@ -132,17 +134,11 @@ No modules.
 | [aws_apigatewayv2_stage.default_stage](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/apigatewayv2_stage) | resource |
 | [aws_cloudfront_distribution.website](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution) | resource |
 | [aws_cloudfront_origin_access_identity.origin_access_identity](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_origin_access_identity) | resource |
-| [aws_cloudwatch_log_group.log_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_cloudwatch_metric_alarm.dynamodb_throttled_requests](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.lambda_errors](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_dynamodb_table.users](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/dynamodb_table) | resource |
 | [aws_dynamodb_table_item.users](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/dynamodb_table_item) | resource |
-| [aws_iam_role.lambda_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy.lambda_dynamodb_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
-| [aws_iam_role_policy_attachment.lambda_cloudwatch_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_role_policy_attachment.lambda_xray_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_lambda_function.api_backend](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
-| [aws_lambda_permission.allow_apigateway_to_invoke_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
 | [aws_s3_bucket.cf_access_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket.origin_website](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_acl.cf_logs_acl](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_acl) | resource |
@@ -153,13 +149,11 @@ No modules.
 | [ovh_domain_zone_record.cert_validation_record](https://registry.terraform.io/providers/ovh/ovh/latest/docs/resources/domain_zone_record) | resource |
 | [ovh_domain_zone_record.cf_record](https://registry.terraform.io/providers/ovh/ovh/latest/docs/resources/domain_zone_record) | resource |
 | [terraform_data.deploy_to_s3](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
-| [archive_file.lambda_package](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_canonical_user_id.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/canonical_user_id) | data source |
 | [aws_cloudfront_cache_policy.cache_optimized](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/cloudfront_cache_policy) | data source |
 | [aws_cloudfront_log_delivery_canonical_user_id.awslogsdelivery](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/cloudfront_log_delivery_canonical_user_id) | data source |
 | [aws_iam_policy_document.lambda_dynamodb_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.lambda_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.origin_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ### Inputs
@@ -169,7 +163,6 @@ No modules.
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Region to deploy to | `string` | `"eu-west-3"` | no |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | Default tags to apply to resources | `map(string)` | <pre>{<br>  "app": "devops-challenge"<br>}</pre> | no |
 | <a name="input_env"></a> [env](#input\_env) | Name of the environment | `string` | `"dev"` | no |
-| <a name="input_lambda_directory"></a> [lambda\_directory](#input\_lambda\_directory) | The directory containing lambda | `string` | `"backend"` | no |
 | <a name="input_ovh_domain_conf"></a> [ovh\_domain\_conf](#input\_ovh\_domain\_conf) | OVH DNS zone configuration if you want to use a custom domain. | <pre>object({<br>    dns_zone_name = string<br>    subdomain     = optional(string, "")<br><br>  })</pre> | <pre>{<br>  "dns_zone_name": "",<br>  "subdomain": ""<br>}</pre> | no |
 | <a name="input_prefix"></a> [prefix](#input\_prefix) | A prefix appended to each resource | `string` | `"devops-challenge"` | no |
 

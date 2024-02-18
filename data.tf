@@ -1,14 +1,3 @@
-data "aws_iam_policy_document" "lambda_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
-    }
-  }
-}
-
 # Required for cloudfront access logs bucket
 data "aws_canonical_user_id" "current" {}
 
@@ -42,11 +31,4 @@ data "aws_iam_policy_document" "origin_bucket_policy" {
 
 data "aws_cloudfront_cache_policy" "cache_optimized" {
   name = "Managed-CachingOptimized"
-}
-
-# Package the lambda in a zip file
-data "archive_file" "lambda_package" {
-  output_path = "${var.lambda_directory}/lambda.zip"
-  source_file = "${var.lambda_directory}/main.py"
-  type        = "zip"
 }

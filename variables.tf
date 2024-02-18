@@ -18,12 +18,6 @@ variable "default_tags" {
   }
 }
 
-variable "lambda_directory" {
-  description = "The directory containing lambda"
-  type        = string
-  default     = "backend"
-}
-
 variable "env" {
   description = "Name of the environment"
   type        = string

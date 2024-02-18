@@ -1,0 +1,2 @@
+# This is just an example to install dependencies.
+requests==2.31.0

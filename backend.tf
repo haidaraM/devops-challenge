@@ -1,52 +1,33 @@
-resource "aws_iam_role" "lambda_role" {
-  name               = "${var.prefix}-${var.env}-api-backend"
-  description        = "IAM Role for the API Backend"
-  assume_role_policy = data.aws_iam_policy_document.lambda_role_policy.json
-}
+module "lambda_function" {
+  source                                  = "terraform-aws-modules/lambda/aws"
+  version                                 = "7.2.1"
+  function_name                           = "${var.prefix}-${var.env}-api-backend"
+  description                             = "API Backend for the DevOps challenge project"
+  handler                                 = "main.handler"
+  runtime                                 = "python3.11"
+  timeout                                 = 29
+  tracing_mode                            = "Active"
+  attach_tracing_policy                   = true
+  create_current_version_allowed_triggers = false
 
+  source_path = "./backend"
 
-resource "aws_iam_role_policy" "lambda_dynamodb_access" {
-  name   = "dynamodb-access"
-  policy = data.aws_iam_policy_document.lambda_dynamodb_access.json
-  role   = aws_iam_role.lambda_role.id
-}
-
-
-resource "aws_iam_role_policy_attachment" "lambda_cloudwatch_access" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.lambda_role.id
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_xray_access" {
-  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
-  role       = aws_iam_role.lambda_role.id
-}
-
-
-resource "aws_lambda_function" "api_backend" {
-  function_name    = "${var.prefix}-${var.env}-api-backend"
-  description      = "API Backend for the DevOps challenge project"
-  role             = aws_iam_role.lambda_role.arn
-  handler          = "main.handler"
-  runtime          = "python3.8"
-  timeout          = 29
-  filename         = data.archive_file.lambda_package.output_path
-  source_code_hash = filebase64sha256(data.archive_file.lambda_package.output_path)
-
-  tracing_config {
-    mode = "Active"
+  environment_variables = {
+    DYNAMODB_TABLE = aws_dynamodb_table.users.name
   }
 
-  environment {
-    variables = {
-      DYNAMODB_TABLE = aws_dynamodb_table.users.name
+  allowed_triggers = {
+    AllowExecutionFromAPIGateway = {
+      service    = "apigateway"
+      source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
     }
   }
 }
 
-resource "aws_cloudwatch_log_group" "log_group" {
-  name              = "/aws/lambda/${aws_lambda_function.api_backend.function_name}"
-  retention_in_days = 14
+resource "aws_iam_role_policy" "lambda_dynamodb_access" {
+  name   = "dynamodb-access"
+  policy = data.aws_iam_policy_document.lambda_dynamodb_access.json
+  role   = module.lambda_function.lambda_role_name
 }
 
 resource "aws_dynamodb_table" "users" {
@@ -89,18 +70,11 @@ resource "aws_apigatewayv2_api" "http_api" {
   }
 }
 
-resource "aws_lambda_permission" "allow_apigateway_to_invoke_lambda" {
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.api_backend.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*"
-}
-
 resource "aws_apigatewayv2_integration" "lambda_integration" {
   api_id               = aws_apigatewayv2_api.http_api.id
   integration_type     = "AWS_PROXY"
   integration_method   = "POST"
-  integration_uri      = aws_lambda_function.api_backend.invoke_arn
+  integration_uri      = module.lambda_function.lambda_function_invoke_arn
   passthrough_behavior = "WHEN_NO_MATCH"
 }
 
