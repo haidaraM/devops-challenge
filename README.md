@@ -201,7 +201,7 @@ This mono repository has the following structure:
 │   ├── architecture.png
 │   └── screenshot.png
 ├── README.md
-├── backend.tf # Backend resources: lambda function, API Gateway...
+├── api-lambda.tf # API Gateway, Lambda function 
 ├── data.tf # Data sources
 ├── frontend.tf # Frontend resources: S3 buckets, cloudfront
 ├── main.tf # Terraform Providers 
