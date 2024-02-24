@@ -36,3 +36,9 @@ variable "ovh_domain_conf" {
     subdomain     = ""
   }
 }
+
+variable "invalid_cache" {
+  description = "Flag indicating if we should invalidate the Cloudfront Cache after each deployment of the files to the S3 bucket."
+  type        = bool
+  default     = false
+}

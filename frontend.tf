@@ -56,32 +56,6 @@ resource "aws_s3_bucket_acl" "cf_logs_acl" {
   }
 }
 
-# As Terraform doesn't support S3 sync. So we are using a null ressource to deploy the static files to S3
-resource "terraform_data" "deploy_to_s3" {
-  triggers_replace = [
-    aws_s3_bucket.origin_website.bucket,
-    filebase64sha256("${path.module}/${local.frontend_build_dir}/index.html"),
-    local.frontend_config_final_content
-  ]
-
-  # Generate the template for the frontend
-  provisioner "local-exec" {
-    command = "echo '${local.frontend_config_final_content}' > ${path.module}/${local.frontend_build_dir}/assets/config.json"
-  }
-
-  /*
-    We suppose here that the required AWS credentials are exported in the environment variables.
-    Otherwise, the following AWS commands will not work.
-  */
-  provisioner "local-exec" {
-    command = "aws s3 sync --exclude '${aws_s3_object.architecture_img.key}' --exclude 'assets/config.tpl.json' --delete ${local.frontend_build_dir} s3://${aws_s3_bucket.origin_website.bucket}"
-  }
-
-  # Do not cache the index.html so that changes are deployed automatically. Other files are cached by default.
-  provisioner "local-exec" {
-    command = "aws s3 cp --copy-props metadata-directive --cache-control 'max-age=0,no-store' s3://${aws_s3_bucket.origin_website.bucket}/index.html s3://${aws_s3_bucket.origin_website.bucket}/index.html"
-  }
-}
 
 resource "aws_s3_bucket_policy" "cf_origin_bucket_policy" {
   bucket = aws_s3_bucket.origin_website.bucket
@@ -140,5 +114,43 @@ resource "aws_cloudfront_distribution" "website" {
   logging_config {
     bucket          = aws_s3_bucket.cf_access_logs.bucket_domain_name
     include_cookies = false
+  }
+}
+
+# As Terraform doesn't support S3 sync. So we are using a null ressource to deploy the static files to S3
+resource "terraform_data" "deploy_to_s3" {
+  triggers_replace = [
+    aws_s3_bucket.origin_website.bucket,
+    filebase64sha256("${path.module}/${local.frontend_build_dir}/index.html"),
+    local.frontend_config_final_content
+  ]
+
+  # Generate the template for the frontend
+  provisioner "local-exec" {
+    command = "echo '${local.frontend_config_final_content}' > ${path.module}/${local.frontend_build_dir}/assets/config.json"
+  }
+
+  /*
+    We suppose here that the required AWS credentials are exported in the environment variables.
+    Otherwise, the following AWS commands will not work.
+  */
+  provisioner "local-exec" {
+    command = "aws s3 sync --exclude '${aws_s3_object.architecture_img.key}' --exclude 'assets/config.tpl.json' --delete ${local.frontend_build_dir} s3://${aws_s3_bucket.origin_website.bucket}"
+  }
+
+  # Do not cache the index.html so that changes are deployed automatically. Other files are cached by default.
+  provisioner "local-exec" {
+    command = "aws s3 cp --copy-props metadata-directive --cache-control 'max-age=0,no-store' s3://${aws_s3_bucket.origin_website.bucket}/index.html s3://${aws_s3_bucket.origin_website.bucket}/index.html"
+  }
+}
+
+resource "terraform_data" "invalidate_cache" {
+  count = var.invalid_cache ? 1 : 0
+  triggers_replace = [
+    terraform_data.deploy_to_s3.id
+  ]
+
+  provisioner "local-exec" {
+    command = "aws cloudfront create-invalidation --distribution-id ${aws_cloudfront_distribution.website.id} --paths '/*'"
   }
 }
