@@ -19,7 +19,7 @@ Requirements:
 - Deliver the tooling to set up an application which displays a web page with text and an image in AWS. (AWS free-tier
   is fine)
 - Provide and document a mechanism for scaling the service and delivering the content to a larger audience.
-- Source code should be provided via a publicly accessible Github repository.
+- Source code should be provided via a publicly accessible GitHub repository.
 - Provide basic documentation to run the application along with any other documentation you think is appropriate.
 
 ## Implementation
@@ -58,7 +58,7 @@ with the AWS following services:
 
 This project also demonstrates the following features of Terraform:
 
-- Cross-region deployment with the Cloudfront ACM certificate in us-east-1 (mandatory)
+- Cross-region deployment with the CloudFront ACM certificate in us-east-1 (mandatory)
 - Multi cloud by using OVH DNS zone instead of AWS Route53
 - Terraform local provisioners to deploy the frontend to an S3 bucket only when there are changes
 
@@ -67,7 +67,7 @@ This project also demonstrates the following features of Terraform:
 ### Custom domain with OVH
 
 If you have an existing DNS Zone on [OVH](https://www.ovhcloud.com/fr/), you can leverage it to have a custom domain on
-top your CloudFront distribution. To use it, set the variable `ovh_domain_conf`.
+ top of your CloudFront distribution. To use it, set the variable `ovh_domain_conf`.
 
 Example:
 
@@ -189,7 +189,7 @@ services, persons should have access to this key.
 Some components and metrics to monitor:
 
 - Alarm on Lambda function error metric (implemented)
-- Alarms on Cloudfront metrics: 4xxErrorRate, 5xxErrorRate
+- Alarms on CloudFront metrics: 4xxErrorRate, 5xxErrorRate
 - Alarms Dynamodb throttle metrics (implemented), ConsumedReadCapacityUnits and ConsumedWriteCapacityUnits
 - API Gateway metrics
 
@@ -218,7 +218,7 @@ Before launching Terraform in a pipeline, we should first set up a S3 backend (f
 
 ## Terraform configuration
 
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- BEGIN_TF_DOCS -->
 ### Requirements
 
 | Name | Version |
@@ -296,4 +296,4 @@ Before launching Terraform in a pipeline, we should first set up a S3 backend (f
 |------|-------------|
 | <a name="output_users_endpoint"></a> [users\_endpoint](#output\_users\_endpoint) | API Gateway url to access users |
 | <a name="output_website_url"></a> [website\_url](#output\_website\_url) | Cloudfront URL to access the website |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- END_TF_DOCS -->

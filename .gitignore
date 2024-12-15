@@ -36,5 +36,4 @@ terraform.rc
 
 .idea
 backend/lambda.zip
-.terraform.lock.hcl
 builds/

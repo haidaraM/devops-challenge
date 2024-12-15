@@ -13,7 +13,7 @@ resource "aws_s3_object" "architecture_img" {
 }
 
 
-# The bucket for cloudfront access logs
+# The bucket for CloudFront access logs
 resource "aws_s3_bucket" "cf_access_logs" {
   bucket        = "${var.prefix}-${var.env}-cloudfront-logs-${data.aws_caller_identity.current.account_id}"
   force_destroy = true

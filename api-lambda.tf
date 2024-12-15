@@ -1,6 +1,6 @@
 module "lambda_function" {
   source                                  = "terraform-aws-modules/lambda/aws"
-  version                                 = "7.2.1"
+  version                                 = "7.17.0"
   function_name                           = "${var.prefix}-${var.env}-api-backend"
   description                             = "API Backend for the DevOps challenge project"
   handler                                 = "main.handler"
