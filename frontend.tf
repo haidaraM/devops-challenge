@@ -117,7 +117,7 @@ resource "aws_cloudfront_distribution" "website" {
   }
 }
 
-# As Terraform doesn't support S3 sync. So we are using a null ressource to deploy the static files to S3
+# As Terraform doesn't support S3 sync. So we are using a local provisioner to deploy the static files to S3
 resource "terraform_data" "deploy_to_s3" {
   triggers_replace = [
     aws_s3_bucket.origin_website.bucket,

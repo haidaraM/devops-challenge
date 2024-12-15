@@ -125,7 +125,7 @@ This mono repository has the following structure:
 ├── api-lambda.tf # API Gateway, Lambda function 
 ├── data.tf # Data sources
 ├── frontend.tf # Frontend resources: S3 buckets, cloudfront
-├── main.tf # Terraform Providers 
+├── terraform.tf # Terraform Providers 
 ├── monitoring.tf # SNS, alarms
 ├── outputs.tf # Terraform outputs
 ├── ovh-acm.tf # OVH and ACM configuration
